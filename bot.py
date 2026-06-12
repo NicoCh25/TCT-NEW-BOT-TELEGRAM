@@ -17,7 +17,7 @@ from telegram.ext import (
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-AR_TZ = pytz.timezone("America/Argentina/Buenos_Aires")
+UTC = pytz.utc
 CONFIG_FILE = "config.json"
 OWNER_ID = int(os.environ["OWNER_ID"])
 
@@ -417,25 +417,25 @@ def main():
     GOLD_DAYS = (0, 1, 2, 3, 6)  # lun mar mie jue dom
 
     # 🥇 GOLD 10:50 PM AR
-    jq.run_daily(gold_night_15min,   time(22, 35, tzinfo=AR_TZ), days=GOLD_DAYS)
-    jq.run_daily(gold_night_5min,    time(22, 45, tzinfo=AR_TZ), days=GOLD_DAYS)
-    jq.run_daily(gold_night_signal,  time(22, 50, tzinfo=AR_TZ), days=GOLD_DAYS)
+    jq.run_daily(gold_night_15min,   time(1, 35, tzinfo=UTC), days=GOLD_DAYS)
+    jq.run_daily(gold_night_5min,    time(1, 45, tzinfo=UTC), days=GOLD_DAYS)
+    jq.run_daily(gold_night_signal,  time(1, 50, tzinfo=UTC), days=GOLD_DAYS)
 
     # 🥇+📈 GOLD+US30 03:50 AM AR
-    jq.run_daily(gold_us30_15min,     time(3, 35, tzinfo=AR_TZ), days=WEEKDAYS)
-    jq.run_daily(gold_us30_5min,      time(3, 45, tzinfo=AR_TZ), days=WEEKDAYS)
-    jq.run_daily(gold_morning_signal, time(3, 50, tzinfo=AR_TZ), days=WEEKDAYS)
-    jq.run_daily(us30_morning_signal, time(3, 50, tzinfo=AR_TZ), days=WEEKDAYS)
+    jq.run_daily(gold_us30_15min,     time(6, 35, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(gold_us30_5min,      time(6, 45, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(gold_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(us30_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
 
     # 📈 US30 07:50 AM AR
-    jq.run_daily(us30_15min,  time(7, 35, tzinfo=AR_TZ), days=WEEKDAYS)
-    jq.run_daily(us30_5min,   time(7, 45, tzinfo=AR_TZ), days=WEEKDAYS)
-    jq.run_daily(us30_signal, time(7, 50, tzinfo=AR_TZ), days=WEEKDAYS)
+    jq.run_daily(us30_15min,  time(10, 35, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(us30_5min,   time(10, 45, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(us30_signal, time(10, 50, tzinfo=UTC), days=WEEKDAYS)
 
     # ₿ BTC 10:00 AM AR
-    jq.run_daily(btc_15min,  time(9,  45, tzinfo=AR_TZ), days=EVERYDAY)
-    jq.run_daily(btc_5min,   time(9,  55, tzinfo=AR_TZ), days=EVERYDAY)
-    jq.run_daily(btc_signal, time(10,  0, tzinfo=AR_TZ), days=EVERYDAY)
+    jq.run_daily(btc_15min,  time(12, 45, tzinfo=UTC), days=EVERYDAY)
+    jq.run_daily(btc_5min,   time(12, 55, tzinfo=UTC), days=EVERYDAY)
+    jq.run_daily(btc_signal, time(13,  0, tzinfo=UTC), days=EVERYDAY)
 
     logger.info("Signal Bot iniciado.")
     app.run_polling()
