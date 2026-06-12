@@ -259,10 +259,31 @@ async def cmd_test(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     asset = ctx.args[0].upper() if ctx.args else "BTC"
     if asset not in ASSETS:
-        await update.message.reply_text("⚠️ Usá: /test GOLD | /test US30 | /test BTC")
+        await update.message.reply_text("⚠️ Usá: /testgold | /testus30 | /testbtc")
         return
     await update.message.reply_text(f"🧪 Probando señal de {asset}...")
     await send_signal_prompt(ctx.bot, asset, ctx.job_queue)
+
+async def cmd_testgold(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not can_use(update.effective_user.id):
+        await update.message.reply_text("⛔ Sin acceso.")
+        return
+    await update.message.reply_text("🧪 Probando señal de GOLD...")
+    await send_signal_prompt(ctx.bot, "GOLD", ctx.job_queue)
+
+async def cmd_testus30(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not can_use(update.effective_user.id):
+        await update.message.reply_text("⛔ Sin acceso.")
+        return
+    await update.message.reply_text("🧪 Probando señal de US30...")
+    await send_signal_prompt(ctx.bot, "US30", ctx.job_queue)
+
+async def cmd_testbtc(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not can_use(update.effective_user.id):
+        await update.message.reply_text("⛔ Sin acceso.")
+        return
+    await update.message.reply_text("🧪 Probando señal de BTC...")
+    await send_signal_prompt(ctx.bot, "BTC", ctx.job_queue)
 
 async def cmd_addchannel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not can_use(update.effective_user.id):
@@ -378,6 +399,9 @@ def main():
 
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("test", cmd_test))
+    app.add_handler(CommandHandler("testgold", cmd_testgold))
+    app.add_handler(CommandHandler("testus30", cmd_testus30))
+    app.add_handler(CommandHandler("testbtc", cmd_testbtc))
     app.add_handler(CommandHandler("addchannel", cmd_addchannel))
     app.add_handler(CommandHandler("removechannel", cmd_removechannel))
     app.add_handler(CommandHandler("listchannels", cmd_listchannels))
