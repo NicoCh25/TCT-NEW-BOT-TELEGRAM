@@ -414,7 +414,7 @@ def main():
     jq = app.job_queue
     EVERYDAY = (0, 1, 2, 3, 4, 5, 6)
     WEEKDAYS = (0, 1, 2, 3, 4)
-    GOLD_DAYS = (0, 1, 2, 3, 6)  # lun mar mie jue dom
+    GOLD_DAYS = (0, 1, 2, 3, 4)  # UTC: lun mar mie jue vie = AR: dom lun mar mie jue noche
 
     # 🥇 GOLD 10:50 PM AR
     jq.run_daily(gold_night_15min,   time(1, 35, tzinfo=UTC), days=GOLD_DAYS)
