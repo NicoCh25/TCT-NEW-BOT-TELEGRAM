@@ -189,35 +189,45 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
 # ── Scheduler jobs ────────────────────────────────────────────────────────────
 
 async def gold_night_15min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_gold_day(): return
     await broadcast(ctx.bot, "⏰ En 15 min — GOLD. Prepárense para operar.")
 
 async def gold_night_5min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_gold_day(): return
     await broadcast(ctx.bot, "⚡ En 5 min — GOLD. Estén listos.")
 
 async def gold_night_signal(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_gold_day(): return
     await send_signal_prompt(ctx.bot, "GOLD", ctx.job_queue)
 
 async def gold_us30_15min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await broadcast(ctx.bot, "⏰ En 15 min — GOLD. Prepárense para operar.")
     await broadcast(ctx.bot, "⏰ En 15 min — US30. Prepárense para operar.")
 
 async def gold_us30_5min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await broadcast(ctx.bot, "⚡ En 5 min — GOLD. Estén listos.")
     await broadcast(ctx.bot, "⚡ En 5 min — US30. Estén listos.")
 
 async def gold_morning_signal(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await send_signal_prompt(ctx.bot, "GOLD", ctx.job_queue)
 
 async def us30_morning_signal(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await send_signal_prompt(ctx.bot, "US30", ctx.job_queue)
 
 async def us30_15min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await broadcast(ctx.bot, "⏰ En 15 min — US30. Prepárense para operar.")
 
 async def us30_5min(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await broadcast(ctx.bot, "⚡ En 5 min — US30. Estén listos.")
 
 async def us30_signal(ctx: ContextTypes.DEFAULT_TYPE):
+    if not is_weekday_ar(): return
     await send_signal_prompt(ctx.bot, "US30", ctx.job_queue)
 
 async def btc_15min(ctx: ContextTypes.DEFAULT_TYPE):
