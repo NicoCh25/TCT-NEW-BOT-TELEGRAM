@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from datetime import time
+from datetime import time, datetime
 import pytz
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,7 +17,8 @@ from telegram.ext import (
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-UTC = pytz.utc
+UTC   = pytz.utc
+AR_TZ = pytz.timezone("America/Argentina/Buenos_Aires")
 CONFIG_FILE = "config.json"
 OWNER_ID = int(os.environ["OWNER_ID"])
 
@@ -26,6 +27,19 @@ ASSETS = {
     "US30": {"emoji": "📈", "tp": 200,  "sl": 200},
     "BTC":  {"emoji": "₿",  "tp": 400,  "sl": 800},
 }
+
+# ── Day checks en hora Argentina ──────────────────────────────────────────────
+def ar_weekday() -> int:
+    """0=lun, 1=mar, 2=mie, 3=jue, 4=vie, 5=sab, 6=dom"""
+    return datetime.now(AR_TZ).weekday()
+
+def is_gold_day() -> bool:
+    """GOLD opera dom-jue en Argentina"""
+    return ar_weekday() in (0, 1, 2, 3, 6)
+
+def is_weekday_ar() -> bool:
+    """Lunes a viernes en Argentina"""
+    return ar_weekday() in (0, 1, 2, 3, 4)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 def load_config() -> dict:
@@ -60,7 +74,7 @@ async def broadcast(bot, text: str):
         except Exception as e:
             logger.error(f"Error enviando a {chat_id}: {e}")
 
-# ── Paso 1: botón COMPRA/VENTA (ventana 10 min) ───────────────────────────────
+# ── Señal con botones COMPRA/VENTA ────────────────────────────────────────────
 async def send_signal_prompt(bot, asset: str, job_queue=None):
     a = ASSETS[asset]
     keyboard = InlineKeyboardMarkup([[
@@ -82,7 +96,7 @@ async def send_signal_prompt(bot, asset: str, job_queue=None):
             if job_queue:
                 job_queue.run_once(
                     expire_signal,
-                    when=1200,  # 20 minutos
+                    when=1200,
                     data={"chat_id": uid, "message_id": msg.message_id, "asset": asset},
                     name=f"expire_{msg.message_id}",
                 )
@@ -101,7 +115,7 @@ async def expire_signal(ctx: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error expirando señal: {e}")
 
-# ── Paso 2: botón TP/SL (aparece después de elegir dirección) ─────────────────
+# ── Botón TP/SL ───────────────────────────────────────────────────────────────
 async def send_result_prompt(bot, asset: str, direction: str, uid: int):
     a = ASSETS[asset]
     direction_emoji = "🟢" if direction == "COMPRA" else "🔴"
@@ -117,9 +131,9 @@ async def send_result_prompt(bot, asset: str, direction: str, uid: int):
         await bot.send_message(chat_id=uid, text=text,
                                 reply_markup=keyboard, parse_mode="Markdown")
     except Exception as e:
-        logger.error(f"Error enviando resultado prompt a {uid}: {e}")
+        logger.error(f"Error enviando resultado prompt: {e}")
 
-# ── Callback: eligió COMPRA o VENTA ──────────────────────────────────────────
+# ── Callbacks ─────────────────────────────────────────────────────────────────
 async def handle_signal_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     uid = query.from_user.id
@@ -127,14 +141,10 @@ async def handle_signal_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
         await query.answer("⛔ Sin acceso.", show_alert=True)
         return
     await query.answer()
-
     _, asset, direction = query.data.split(":")
     a = ASSETS[asset]
-
-    # Cancelar expiración
     for job in ctx.job_queue.get_jobs_by_name(f"expire_{query.message.message_id}"):
         job.schedule_removal()
-
     direction_emoji = "🟢" if direction == "COMPRA" else "🔴"
     signal_text = (
         f"📊 SEÑAL\n"
@@ -142,22 +152,14 @@ async def handle_signal_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
         f"🎯 TP: +{a['tp']} pips\n"
         f"🛡 SL: −{a['sl']} pips"
     )
-
-    # Confirmar en el mensaje original
     await query.edit_message_text(
         f"{direction_emoji} *{asset} {direction}* enviado a todos los canales.",
         parse_mode="Markdown",
     )
-
-    # Publicar en canales
     await broadcast(ctx.bot, signal_text)
-
-    # Mandar botón de resultado TP/SL
     await send_result_prompt(ctx.bot, asset, direction, uid)
-
     logger.info(f"Señal enviada: {asset} {direction}")
 
-# ── Callback: eligió TP o SL ─────────────────────────────────────────────────
 async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     uid = query.from_user.id
@@ -165,23 +167,14 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
         await query.answer("⛔ Sin acceso.", show_alert=True)
         return
     await query.answer()
-
     _, asset, result = query.data.split(":")
     a = ASSETS[asset]
-
     if result == "TP":
-        result_text = (
-            f"✅ {a['emoji']} {asset} — TAKE PROFIT ✅\n"
-            f"+{a['tp']} pips 🎯"
-        )
+        result_text = f"✅ {a['emoji']} {asset} — TAKE PROFIT ✅\n+{a['tp']} pips 🎯"
         confirm = f"✅ *{asset} TAKE PROFIT* anunciado."
     else:
-        result_text = (
-            f"❌ {a['emoji']} {asset} — STOP LOSS\n"
-            f"−{a['sl']} pips"
-        )
+        result_text = f"❌ {a['emoji']} {asset} — STOP LOSS\n−{a['sl']} pips"
         confirm = f"❌ *{asset} STOP LOSS* anunciado."
-
     await query.edit_message_text(confirm, parse_mode="Markdown")
     await broadcast(ctx.bot, result_text)
     logger.info(f"Resultado enviado: {asset} {result}")
@@ -248,14 +241,14 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📡 *Signal Bot activo*\n\n"
         "*Scheduler (hora Argentina):*\n"
-        "🥇 GOLD → 10:35 / 10:45 / 10:50 PM\n"
-        "🥇+📈 GOLD+US30 → 3:35 / 3:45 / 3:50 AM\n"
-        "📈 US30 → 7:35 / 7:45 / 7:50 AM\n"
-        "₿ BTC → 9:45 / 9:55 / 10:00 AM\n\n"
+        "🥇 GOLD → 10:35 / 10:45 / 10:50 PM _(dom\\-jue)_\n"
+        "🥇+📈 GOLD+US30 → 3:35 / 3:45 / 3:50 AM _(lun\\-vie)_\n"
+        "📈 US30 → 7:35 / 7:45 / 7:50 AM _(lun\\-vie)_\n"
+        "₿ BTC → 9:45 / 9:55 / 10:00 AM _(todos los días)_\n\n"
         "*Comandos:*\n"
-        "/test GOLD — Probar señal\n"
-        "/test US30 — Probar señal\n"
-        "/test BTC — Probar señal\n"
+        "/testgold — Probar señal GOLD\n"
+        "/testus30 — Probar señal US30\n"
+        "/testbtc — Probar señal BTC\n"
         "/addchannel `<id>` — Agregar canal\n"
         "/removechannel `<id>` — Quitar canal\n"
         "/listchannels — Ver canales\n"
@@ -424,25 +417,25 @@ def main():
     jq = app.job_queue
     EVERYDAY = (0, 1, 2, 3, 4, 5, 6)
     WEEKDAYS = (0, 1, 2, 3, 4)
-    GOLD_DAYS = (0, 1, 2, 3, 4)  # UTC: lun mar mie jue vie = AR: dom lun mar mie jue noche
+    GOLD_DAYS = (0, 1, 2, 3, 4)  # UTC lun-vie = AR dom-jue noche
 
-    # 🥇 GOLD 10:50 PM AR
-    jq.run_daily(gold_night_15min,   time(1, 35, tzinfo=UTC), days=GOLD_DAYS)
-    jq.run_daily(gold_night_5min,    time(1, 45, tzinfo=UTC), days=GOLD_DAYS)
-    jq.run_daily(gold_night_signal,  time(1, 50, tzinfo=UTC), days=GOLD_DAYS)
+    # 🥇 GOLD 10:50 PM AR = 1:50 AM UTC
+    jq.run_daily(gold_night_15min,    time(1, 35, tzinfo=UTC), days=GOLD_DAYS)
+    jq.run_daily(gold_night_5min,     time(1, 45, tzinfo=UTC), days=GOLD_DAYS)
+    jq.run_daily(gold_night_signal,   time(1, 50, tzinfo=UTC), days=GOLD_DAYS)
 
-    # 🥇+📈 GOLD+US30 03:50 AM AR
+    # 🥇+📈 GOLD+US30 3:50 AM AR = 6:50 AM UTC
     jq.run_daily(gold_us30_15min,     time(6, 35, tzinfo=UTC), days=WEEKDAYS)
     jq.run_daily(gold_us30_5min,      time(6, 45, tzinfo=UTC), days=WEEKDAYS)
     jq.run_daily(gold_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
     jq.run_daily(us30_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
 
-    # 📈 US30 07:50 AM AR
-    jq.run_daily(us30_15min,  time(10, 35, tzinfo=UTC), days=WEEKDAYS)
-    jq.run_daily(us30_5min,   time(10, 45, tzinfo=UTC), days=WEEKDAYS)
-    jq.run_daily(us30_signal, time(10, 50, tzinfo=UTC), days=WEEKDAYS)
+    # 📈 US30 7:50 AM AR = 10:50 AM UTC
+    jq.run_daily(us30_15min,   time(10, 35, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(us30_5min,    time(10, 45, tzinfo=UTC), days=WEEKDAYS)
+    jq.run_daily(us30_signal,  time(10, 50, tzinfo=UTC), days=WEEKDAYS)
 
-    # ₿ BTC 10:00 AM AR
+    # ₿ BTC 10:00 AM AR = 1:00 PM UTC
     jq.run_daily(btc_15min,  time(12, 45, tzinfo=UTC), days=EVERYDAY)
     jq.run_daily(btc_5min,   time(12, 55, tzinfo=UTC), days=EVERYDAY)
     jq.run_daily(btc_signal, time(13,  0, tzinfo=UTC), days=EVERYDAY)
