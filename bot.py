@@ -93,9 +93,9 @@ async def send_signal_prompt(bot, asset: str, job_queue=None, session: str = Non
     ]])
     text = (
         f"*Señal*\n\n"
-        f"{a['emoji']} *{asset}*\n"
-        f"TP: *+{a['tp']} pips*\n"
-        f"SL: *−{a['sl']} pips*\n\n"
+        f"{a['emoji']} {asset}\n"
+        f"TP: +{a['tp']} pips\n"
+        f"SL: −{a['sl']} pips\n\n"
         f"⏱ Ventana: 20 minutos\n\n"
         f"Elegí la dirección:"
     )
@@ -159,9 +159,9 @@ async def handle_signal_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
     direction_emoji = "🟢" if direction == "COMPRA" else "🔴"
     signal_text = (
         f"*Señal*\n\n"
-        f"{a['emoji']} *{asset} — {direction}* {direction_emoji}\n"
-        f"TP: *+{a['tp']} pips*\n"
-        f"SL: *−{a['sl']} pips*"
+        f"{direction_emoji} {asset} - {'COMPRA' if direction=='COMPRA' else 'VENTA'}\n"
+        f"🎯 TP: +{a['tp']} pips\n"
+        f"🛑 SL: −{a['sl']} pips"
     )
     await query.edit_message_text(
         f"{direction_emoji} *{asset} {direction}* enviado a todos los canales.",
@@ -185,10 +185,10 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
     session_tag = f" ({session})" if session else ""
 
     if result == "TP":
-        result_text = f"✅ *{asset} — TAKE PROFIT*{session_tag}\n*+{a['tp']} pips*"
+        result_text = f"*{asset} — TAKE PROFIT*{session_tag}\n\n+{a['tp']} pips"
         confirm = f"✅ *{asset} TAKE PROFIT* anunciado."
     else:
-        result_text = f"❌ *{asset} — STOP LOSS*{session_tag}\n*−{a['sl']} pips*"
+        result_text = f"*{asset} — STOP LOSS*{session_tag}\n\n−{a['sl']} pips"
         confirm = f"❌ *{asset} STOP LOSS* anunciado."
     await query.edit_message_text(confirm, parse_mode="Markdown")
     await broadcast(ctx.bot, result_text, markdown=True)
@@ -198,11 +198,11 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
 
 async def gold_night_15min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_gold_day(): return
-    await broadcast(ctx.bot, "⏰ En 15 min — *GOLD*. Prepárense para operar.", markdown=True)
+    await broadcast(ctx.bot, "*En 15 min — GOLD. Prepárense para operar.*", markdown=True)
 
 async def gold_night_5min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_gold_day(): return
-    await broadcast(ctx.bot, "⚡ En 5 min — *GOLD*. Estén listos.", markdown=True)
+    await broadcast(ctx.bot, "*En 5 min — GOLD. Estén listos.*", markdown=True)
 
 async def gold_night_signal(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_gold_day(): return
@@ -210,11 +210,11 @@ async def gold_night_signal(ctx: ContextTypes.DEFAULT_TYPE):
 
 async def gold_us30_15min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "⏰ En 15 min — *GOLD y US30*. Prepárense para operar.", markdown=True)
+    await broadcast(ctx.bot, "*En 15 min — GOLD y US30. Prepárense para operar.*", markdown=True)
 
 async def gold_us30_5min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "⚡ En 5 min — *GOLD y US30*. Estén listos.", markdown=True)
+    await broadcast(ctx.bot, "*En 5 min — GOLD y US30. Estén listos.*", markdown=True)
 
 async def gold_morning_signal(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
@@ -226,21 +226,21 @@ async def us30_morning_signal(ctx: ContextTypes.DEFAULT_TYPE):
 
 async def us30_15min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "⏰ En 15 min — *US30*. Prepárense para operar.", markdown=True)
+    await broadcast(ctx.bot, "*En 15 min — US30. Prepárense para operar.*", markdown=True)
 
 async def us30_5min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "⚡ En 5 min — *US30*. Estén listos.", markdown=True)
+    await broadcast(ctx.bot, "*En 5 min — US30. Estén listos.*", markdown=True)
 
 async def us30_signal(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
     await send_signal_prompt(ctx.bot, "US30", ctx.job_queue, session="mañana")
 
 async def btc_15min(ctx: ContextTypes.DEFAULT_TYPE):
-    await broadcast(ctx.bot, "⏰ En 15 min — *BTC*. Prepárense para operar.", markdown=True)
+    await broadcast(ctx.bot, "*En 15 min — BTC. Prepárense para operar.*", markdown=True)
 
 async def btc_5min(ctx: ContextTypes.DEFAULT_TYPE):
-    await broadcast(ctx.bot, "⚡ En 5 min — *BTC*. Estén listos.", markdown=True)
+    await broadcast(ctx.bot, "*En 5 min — BTC. Estén listos.*", markdown=True)
 
 async def btc_signal(ctx: ContextTypes.DEFAULT_TYPE):
     await send_signal_prompt(ctx.bot, "BTC", ctx.job_queue, session=None)
