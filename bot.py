@@ -181,18 +181,15 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
     _, asset, result = query.data.split(":")
     a = ASSETS[asset]
 
-    session = LAST_SESSION.get(asset)
-    session_tag = f" ({session})" if session else ""
-
     if result == "TP":
-        result_text = f"*{asset} — TAKE PROFIT*{session_tag}\n\n+{a['tp']} pips"
+        result_text = f"*{asset} — TAKE PROFIT*\n\n+{a['tp']} pips"
         confirm = f"✅ *{asset} TAKE PROFIT* anunciado."
     else:
-        result_text = f"*{asset} — STOP LOSS*{session_tag}\n\n−{a['sl']} pips"
+        result_text = f"*{asset} — STOP LOSS*\n\n−{a['sl']} pips"
         confirm = f"❌ *{asset} STOP LOSS* anunciado."
     await query.edit_message_text(confirm, parse_mode="Markdown")
     await broadcast(ctx.bot, result_text, markdown=True)
-    logger.info(f"Resultado enviado: {asset} {result} {session_tag}")
+    logger.info(f"Resultado enviado: {asset} {result}")
 
 # ── Scheduler jobs ────────────────────────────────────────────────────────────
 
@@ -265,7 +262,8 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "/addchannel `<id>` — Agregar canal\n"
         "/removechannel `<id>` — Quitar canal\n"
         "/listchannels — Ver canales\n"
-        "/addadmin `<id>` — Agregar admin",
+        "/addadmin `<id>` — Agregar admin\n"
+        "/removeadmin `<id>` — Quitar admin",
         parse_mode="Markdown",
     )
 
@@ -364,6 +362,26 @@ async def cmd_addadmin(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     save_config(cfg)
     await update.message.reply_text(f"✅ Admin `{new_admin}` agregado.", parse_mode="Markdown")
 
+async def cmd_removeadmin(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        await update.message.reply_text("⛔ Solo el owner.")
+        return
+    if not ctx.args:
+        await update.message.reply_text("Uso: /removeadmin `<user_id>`", parse_mode="Markdown")
+        return
+    try:
+        admin_id = int(ctx.args[0])
+    except ValueError:
+        await update.message.reply_text("⚠️ El user_id debe ser un número.")
+        return
+    cfg = load_config()
+    if admin_id not in cfg["admins"]:
+        await update.message.reply_text("⚠️ No era admin.")
+        return
+    cfg["admins"].remove(admin_id)
+    save_config(cfg)
+    await update.message.reply_text(f"🗑️ Admin `{admin_id}` eliminado.", parse_mode="Markdown")
+
 async def broadcast_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not can_use(update.effective_user.id):
         return
@@ -422,6 +440,7 @@ def main():
     app.add_handler(CommandHandler("removechannel", cmd_removechannel))
     app.add_handler(CommandHandler("listchannels", cmd_listchannels))
     app.add_handler(CommandHandler("addadmin", cmd_addadmin))
+    app.add_handler(CommandHandler("removeadmin", cmd_removeadmin))
     app.add_handler(CallbackQueryHandler(handle_signal_callback, pattern="^signal:"))
     app.add_handler(CallbackQueryHandler(handle_result_callback, pattern="^result:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, broadcast_text))
