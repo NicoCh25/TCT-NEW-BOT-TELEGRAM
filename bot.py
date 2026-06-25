@@ -182,10 +182,10 @@ async def handle_result_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
     a = ASSETS[asset]
 
     if result == "TP":
-        result_text = f"*{asset} — TAKE PROFIT*\n\n+{a['tp']} pips"
+        result_text = f"✅ *{asset} — TAKE PROFIT*\n\n+{a['tp']} pips"
         confirm = f"✅ *{asset} TAKE PROFIT* anunciado."
     else:
-        result_text = f"*{asset} — STOP LOSS*\n\n−{a['sl']} pips"
+        result_text = f"❌ *{asset} — STOP LOSS*\n\n−{a['sl']} pips"
         confirm = f"❌ *{asset} STOP LOSS* anunciado."
     await query.edit_message_text(confirm, parse_mode="Markdown")
     await broadcast(ctx.bot, result_text, markdown=True)
