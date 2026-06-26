@@ -207,11 +207,11 @@ async def gold_night_signal(ctx: ContextTypes.DEFAULT_TYPE):
 
 async def gold_us30_15min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "*En 15 min — GOLD y US30. Prepárense para operar.*", markdown=True)
+    await broadcast(ctx.bot, "*En 15 min — GOLD. Prepárense para operar.*", markdown=True)
 
 async def gold_us30_5min(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
-    await broadcast(ctx.bot, "*En 5 min — GOLD y US30. Estén listos.*", markdown=True)
+    await broadcast(ctx.bot, "*En 5 min — GOLD. Estén listos.*", markdown=True)
 
 async def gold_morning_signal(ctx: ContextTypes.DEFAULT_TYPE):
     if not is_weekday_ar(): return
@@ -252,7 +252,7 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "📡 *Signal Bot activo*\n\n"
         "*Scheduler (hora Argentina):*\n"
         "🥇 GOLD → 10:35 / 10:45 / 10:50 PM _(dom\\-jue)_\n"
-        "🥇+📈 GOLD+US30 → 3:35 / 3:45 / 3:50 AM _(lun\\-vie)_\n"
+        "🥇 GOLD → 3:35 / 3:45 / 3:50 AM _(lun\\-vie)_\n"
         "📈 US30 → 7:35 / 7:45 / 7:50 AM _(lun\\-vie)_\n"
         "₿ BTC → 9:45 / 9:55 / 10:00 AM _(todos los días)_\n\n"
         "*Comandos:*\n"
@@ -456,11 +456,10 @@ def main():
     jq.run_daily(gold_night_5min,     time(1, 45, tzinfo=UTC), days=GOLD_DAYS)
     jq.run_daily(gold_night_signal,   time(1, 50, tzinfo=UTC), days=GOLD_DAYS)
 
-    # 🥇+📈 GOLD+US30 3:50 AM AR = 6:50 AM UTC
+    # 🥇 GOLD+US30 3:50 AM AR = 6:50 AM UTC  →  solo GOLD
     jq.run_daily(gold_us30_15min,     time(6, 35, tzinfo=UTC), days=WEEKDAYS)
     jq.run_daily(gold_us30_5min,      time(6, 45, tzinfo=UTC), days=WEEKDAYS)
     jq.run_daily(gold_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
-    jq.run_daily(us30_morning_signal, time(6, 50, tzinfo=UTC), days=WEEKDAYS)
 
     # 📈 US30 7:50 AM AR = 10:50 AM UTC
     jq.run_daily(us30_15min,   time(10, 35, tzinfo=UTC), days=WEEKDAYS)
